@@ -97,6 +97,9 @@ class Environment:
 
         return reward_sum
 
+    def run_step(self, agent):
+        pass
+
     def retrieve_buffer(self):
         pass
 
