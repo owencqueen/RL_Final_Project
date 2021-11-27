@@ -1,4 +1,5 @@
-import torch
+import torch 
+import random
 import numpy as np
 
 from Blazer_Model import Model
@@ -52,6 +53,7 @@ class Environment:
             optimize_mask = None,
             reward_weights = None,
             loss_p = 2,
+            discount = 1,
             max_episodes_replay_buffer = 50,
             ):
 
@@ -66,6 +68,7 @@ class Environment:
         self.replay_buffer_X = []
         self.replay_buffer_y = []
         self.replay_buffer_actions = []
+        self.max_ep_buffer = max_episodes_replay_buffer
 
         self.reward_weights = reward_weights
         self.optimize_mask = optimize_mask
@@ -73,35 +76,82 @@ class Environment:
 
     def run_episode(self, agent, gather_buffer = True, cutoff = None):
         state = torch.autograd.Variable(torch.from_numpy(self.env.reset(drive_trace = self.drive_trace))).float()
-        discount = 0.9
         #state = torch.zeros([0] * 16, dtype=float)
+        rewards = []
         reward_sum = 0
-        for i in range(len(self.env)):
+
+        num_steps = len(self.env)
+
+        for i in range(num_steps):
             #action = np.zeros((3,), dtype=np.double)
-            action = agent(state)
-            state = torch.autograd.Variable(torch.from_numpy(self.env.step(action.detach().numpy().astype(np.double)))).float()
+            action = agent.predict(state).detach().numpy().astype(np.double)
+            state = torch.autograd.Variable(torch.from_numpy(self.env.step(action))).float()
 
             y = self.reward(state.detach().numpy())
 
-            reward_sum += y
+            #reward_sum += y * self.discount
+            rewards.append(y)
 
             if gather_buffer:
-                self.replay_buffer_X.append(torch.tensor(state, dtype = torch.double))
-                self.replay_buffer_y.append(reward_sum) # Get returns as we go
-                self.replay_buffer_actions.append(action)
+                self.replay_buffer_X.append(state)
+                self.replay_buffer_actions.append(torch.tensor(action).float())
 
             if cutoff is not None:
                 if cutoff < i: # Cuts the episode early
                     print(action)
                     break
 
-        return reward_sum
+        # Assign returns for each:
+        self.replay_buffer_y += [0] * num_steps
+        episode_return = 0
+        for i in range(1, len(rewards) + 1):
+            episode_return = rewards[-i] + episode_return * self.discount
+            self.replay_buffer_y[-i] = episode_return
+
+        # Adjust all buffers (if needed)
+        self.adjust_buffers()
+
+        return rewards
 
     def run_step(self, agent):
         pass
 
-    def retrieve_buffer(self):
-        pass
+    def add_to_buffer(self, X, action):
+
+        self.replay_buffer_X.append(X)
+        self.replay_buffer_actions.append(action)
+
+        if len(self.replay_buffer_X) > self.max_ep_buffer:
+            self.replay_buffer_X.pop(0)
+            self.replay_buffer_actions.pop(0)
+
+    def adjust_buffers(self):
+
+        # Error-check:
+        assert (len(self.replay_buffer_X) == len(self.replay_buffer_y)) \
+            and (len(self.replay_buffer_X) == len(self.replay_buffer_actions)), "Buffers not all same size - ERROR"
+
+        adjust_diff = len(self.replay_buffer_X) - self.max_ep_buffer
+
+        if adjust_diff > 0:
+            # Trim the buffers:
+            self.replay_buffer_X = self.replay_buffer_X[adjust_diff:]
+            self.replay_buffer_y = self.replay_buffer_y[adjust_diff:]
+            self.replay_buffer_actions = self.replay_buffer_actions[adjust_diff:]
+        
+    def sample_buffer(self, batch_size = 32):
+        '''
+        Randomly samples the replay buffer
+        '''
+        # TODO - Implement more sophisticated replay buffer
+
+        indices = random.sample(list(range(len(self.replay_buffer_X))), k = batch_size)
+
+        Xbatch = [self.replay_buffer_X[i] for i in indices]
+        ybatch = [self.replay_buffer_y[i] for i in indices]
+        action_batch = [self.replay_buffer_actions[i] for i in indices]
+
+        return Xbatch, ybatch, action_batch
 
     def reward(self, state):
         return testing_reward(state)
