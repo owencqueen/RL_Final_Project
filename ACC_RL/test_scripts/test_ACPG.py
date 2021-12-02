@@ -1,7 +1,7 @@
 import torch
 import sys; sys.path.append('..')
 
-from actor_critic_PG import Actor
+from REINFORCE.REINFORCE_PG import Actor
 
 def test_output_Actor():
     '''Only tests output (no training)'''
