@@ -3,10 +3,11 @@ import random
 import numpy as np
 
 from collections import deque
+from tqdm import trange
 
 from Blazer_Model import Model
 
-from reward_funcs import testing_reward, headway_reward
+from reward_funcs import testing_reward, headway_reward, speed_match_reward
 
 """
 Step the blazer model simulation. Must call reset first. 
@@ -80,7 +81,7 @@ class ReplayBuffer:
 
         # Adjust buffer automatically
         if len(self.buffer) > self.max_size:
-            self.buffer.deque.pop()
+            self.buffer.pop()
 
     def MC_entry(self, s1, a1, r1):
 
@@ -89,7 +90,7 @@ class ReplayBuffer:
 
         # Adjust buffer automatically
         if len(self.buffer) > self.max_size:
-            self.buffer.deque.pop()
+            self.buffer.pop()
 
     def TD_sample(self, batch_size): 
         '''
@@ -99,7 +100,9 @@ class ReplayBuffer:
         :rtype: (Tensor, Tensor, Tensor, Tensor)
         '''
 
-        samp = random.sample(self.buffer, k = batch_size)
+        true_batch_size = min(batch_size, len(self.buffer))
+
+        samp = random.sample(self.buffer, k = true_batch_size)
 
         # Decompose into tensors:
         s1_tensors = []
@@ -107,7 +110,7 @@ class ReplayBuffer:
         r1_tensors = []
         s2_tensors = []
         # Use one loop instead of 4 list comprehensions
-        for i in range(batch_size):
+        for i in range(true_batch_size):
             s1_tensors.append(samp[i].s1)
             a1_tensors.append(samp[i].a1)
             r1_tensors.append(samp[i].r1)
@@ -170,12 +173,14 @@ class Environment:
         num_steps = len(self.env)
 
         for i in range(num_steps):
-            a1 = trainer.get_exploration_action(s1)
-            action = a1.detach().clone().numpy().astype(np.double)
-            s2 = self.env.step(action)
+            a1 = trainer.explore_action(s1)
+            #print(a1)
+            action = a1.detach().clone().numpy()
+            #print(action)
+            s2 = self.env.step(action.astype(np.double))
 
             r1 = self.reward(s2) # Reward calculated via next-state variables
-            s2 = torch.autograd.Variable(torch.from_numpy(s2))
+            s2 = torch.autograd.Variable(torch.from_numpy(s2)).float()
             reward_sum += r1
 
             if gather_buffer:
@@ -187,11 +192,11 @@ class Environment:
                     s2)
 
             # Optimize each step (as following with DDPG algorithm)
-            trainer.optimize(self.replay_buffer)
+            
 
             if cutoff is not None:
                 if cutoff < i: # Cuts the episode early
-                    print(action)
+                    #print(action)
                     break
 
             s1 = s2.detach().clone()
@@ -249,6 +254,9 @@ class Environment:
     #     return Xbatch, ybatch, action_batch
 
     def reward(self, state):
-        return headway_reward(state)
+        r = speed_match_reward(state)
+        #print('reward', r)
+        return r
+        #return headway_reward(state)
 
         

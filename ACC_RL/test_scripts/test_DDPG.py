@@ -1,16 +1,31 @@
 import sys; sys.path.append('..')
 import torch
 import matplotlib.pyplot as plt
+from tqdm import trange
 
 from DDPG.train import DDPGTrainer
 from base_env import Environment
 
+def transform_state(state_vec):
+    #state_vec = torch.nan_to_num(state_vec)
+
+    state_vec = state_vec.T
+
+    my_vec = state_vec[:13][torch.tensor([1, 1, 1, 1, 1, 0, 0, 1, 1, 1, 1, 1, 1], dtype = bool)]
+    #print('LEN', my_vec.shape)
+    return my_vec.T
+
 def main():
     # Initialize trainer:
     trainer = DDPGTrainer(
-        state_dim = 17,
+        state_dim = 11,
         action_dim = 3,
         gamma = 0.9, # Discounting
+        exploration_noise = 10,
+        actor_lr = 0.01,
+        critic_lr = 0.01,
+        state_transform = transform_state,
+        actor_layers=[32, 32]
     )
 
     # Initialize environment
@@ -19,12 +34,14 @@ def main():
         max_episodes_replay_buffer = 1e5
     )
 
-    epochs = 100
+    epochs = 1000
     rewards = []
 
-    for e in range(epochs):
-        r = env.TD_run_episode(trainer = trainer, cutoff = 1e4, SOC = 95)
-        rewards.append(r)
+    for e in trange(epochs):
+        r = env.TD_run_episode(trainer = trainer, cutoff = 3000, SOC = 10)
+        #print('OPTIMIZING')
+        trainer.optimize(env.replay_buffer)
+        rewards.append(r * 1e2)
 
     plt.plot(rewards)
     plt.show()

@@ -28,14 +28,16 @@ class DDPGTrainer:
             batch_size = 128,
             gamma: float = 1,
             exploration_noise: float = 100,
-            actor_lr = 0.001,
-            critic_lr = 0.001,
+            actor_lr = 0.1,
+            critic_lr = 0.1,
+            state_transform = torch.nan_to_num,
             actor_layers = [32, 64, 32],
         ):
 
         self.gamma = gamma
         self.batch_size = batch_size
         self.explore_noise = exploration_noise
+        self.state_transform = state_transform
         
         self.actor = Actor(state_dim, action_dim, actor_layers)
         self.copy_actor = Actor(state_dim, action_dim, actor_layers)
@@ -49,15 +51,23 @@ class DDPGTrainer:
         hard_update(self.copy_actor, self.actor); hard_update(self.copy_critic, self.critic)
 
     def explore_action(self, state):
-        action = self.actor(Variable(torch.from_numpy(state))).detach().data.numpy()
+        #print('state', state)
+        # if torch.isnan(state).any():
+        #     print('nan state', state)
+        #     exit()
+        action = self.actor(self.state_transform(state))
+        #print('action', action)
+        #exit()
 
         # Note: GitHub repo uses Ornstein-Uhlenbeck noise here
         # Use normal for now:
-        return (action + torch.randn_like(action) * self.explore_noise)
+        #print('action', action)
+        return action + torch.randn_like(action) * self.explore_noise
+        #return torch.abs(torch.nan_to_num(action) + torch.randn_like(action) * self.explore_noise) + torch.tensor([100000, 100000, 0])
 
     def exploit_action(self, state):
 
-        return self.actor(Variable(torch.from_numpy(state))).detach().data.numpy()
+        return self.actor(Variable(state))
 
     def optimize(self, replay_buffer):
 
@@ -65,12 +75,12 @@ class DDPGTrainer:
 
         # Optimize critic -----------------------:
 
-        a2 = self.copy_actor.forward(s2).detach() # Action 2
-        Q_prime = torch.squeeze(self.copy_critic.forward(s2, a2).detach())
+        a2 = self.copy_actor.forward(self.state_transform(s2)).detach() # Action 2
+        Q_prime = torch.squeeze(self.copy_critic.forward(self.state_transform(s2), a2).detach())
 
         # Loss: L = 1/N * \sum\limits_{i} (yi - Q_pred)^2
         yi = r1 + self.gamma * Q_prime
-        Q_pred = torch.squeeze(self.critic.forward(s1, a1))
+        Q_pred = torch.squeeze(self.critic.forward(self.state_transform(s1), a1))
 
         # Smooth L1 loss suggested by GitHub repo, used here
         critic_loss = F.smooth_l1_loss(Q_pred, yi)
@@ -81,8 +91,8 @@ class DDPGTrainer:
         self.critic_optimizer.step()
 
         # Optimize actor  -----------------------:
-        a1_pred = self.actor.forward(s1)
-        actor_loss = -1 * torch.sum(self.critic.forward(s1, a1_pred))
+        a1_pred = self.actor.forward(self.state_transform(s1))
+        actor_loss = -1 * torch.sum(self.critic.forward(self.state_transform(s1), a1_pred))
 
         # Run actor optimizer:
         self.actor_optimizer.zero_grad()
