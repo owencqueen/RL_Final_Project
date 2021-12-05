@@ -4,6 +4,7 @@ import numpy as np
 
 from collections import deque
 from tqdm import trange
+from typing import Union
 
 from Blazer_Model import Model
 
@@ -166,14 +167,19 @@ class Environment:
             trainer,
             gather_buffer = True, 
             cutoff = None,
-            SOC = 95):
+            SOC = 95,
+            update_freq = 1,
+            explore_noise_weight: Union[float, torch.Tensor] = None):
         s1 = torch.autograd.Variable(torch.from_numpy(self.env.reset(drive_trace = self.drive_trace, SOC = SOC))).float()
         reward_sum = 0
 
         num_steps = len(self.env)
 
         for i in range(num_steps):
-            a1 = trainer.explore_action(s1)
+            if explore_noise_weight is None: 
+                a1 = trainer.explore_action(s1)
+            else:
+                a1 = trainer.explore_action(s1, explore_noise_weight = explore_noise_weight)
             #print(a1)
             action = a1.detach().clone().numpy()
             #print(action)
@@ -192,6 +198,8 @@ class Environment:
                     s2)
 
             # Optimize each step (as following with DDPG algorithm)
+            if (i + 1) % update_freq == 0:
+                trainer.optimize(self.replay_buffer)
             
 
             if cutoff is not None:

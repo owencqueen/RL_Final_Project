@@ -1,6 +1,7 @@
 import torch
 import torch.nn.functional as F
 from torch.autograd import Variable
+from typing import Union, Callable
 
 from .DDPG_model import Actor_DDPG as Actor, Critic_DDPG as Critic
 
@@ -20,17 +21,40 @@ def hard_update(target, source):
         target_param.data.copy_(param.data)
 
 class DDPGTrainer:
+    '''
+    Training class for the Deep Deterministic Policy Gradient
+
+    Args:
+        state_dim (int): Dimension of state input vector
+        action_dim (int): Dimension of action (output) vector
+        batch_size (int, optional): Size of batch to sample during each update
+        gamma (float, optional): Weighting factor on the Q_prime in the TD
+            error (check DDPG paper)
+        exploration_noise (float or tensor, optional): Standard deviation of 
+            Gaussian noise added to each output action. If tensor is given, 
+            it must be the same length as action, and noise is defined on a per-
+            action basis.
+        actor_lr (float, optional): Learning rate for actor network
+            (:default: `0.1`)
+        critic_lr (float, optional): Learning rate for critic network 
+            (:default: `0.1`)
+        state_transform (callable, optional): Transforms the state each time it 
+            is fed into one of the networks.
+        actor_layers (list, optional): List of sizes of hidden layers for the 
+            actor network. Used for experimentation with different network 
+            structures. (:default: `[32, 64, 32]`)
+    '''
     
     def __init__(
             self,
-            state_dim,
-            action_dim,
+            state_dim: int,
+            action_dim: int,
             batch_size = 128,
             gamma: float = 1,
-            exploration_noise: float = 100,
-            actor_lr = 0.1,
-            critic_lr = 0.1,
-            state_transform = torch.nan_to_num,
+            exploration_noise: Union[float, torch.Tensor] = 100,
+            actor_lr: float = 0.1,
+            critic_lr: float = 0.1,
+            state_transform: Callable[[torch.Tensor], torch.Tensor] = torch.nan_to_num,
             actor_layers = [32, 64, 32],
         ):
 
@@ -50,7 +74,7 @@ class DDPGTrainer:
         # Copy parameters of critic and actor
         hard_update(self.copy_actor, self.actor); hard_update(self.copy_critic, self.critic)
 
-    def explore_action(self, state):
+    def explore_action(self, state, explore_noise_weight = 1):
         #print('state', state)
         # if torch.isnan(state).any():
         #     print('nan state', state)
@@ -62,7 +86,7 @@ class DDPGTrainer:
         # Note: GitHub repo uses Ornstein-Uhlenbeck noise here
         # Use normal for now:
         #print('action', action)
-        return action + torch.randn_like(action) * self.explore_noise
+        return (action + torch.randn_like(action) * self.explore_noise * explore_noise_weight) #* (torch.tensor([0, 1, 1]))
         #return torch.abs(torch.nan_to_num(action) + torch.randn_like(action) * self.explore_noise) + torch.tensor([100000, 100000, 0])
 
     def exploit_action(self, state):

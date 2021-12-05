@@ -50,4 +50,4 @@ def speed_match_reward(state_vec):
     if np.isnan(state_vec[0]):
         ego_speed = 0
     #return -1.0 * np.abs(ego_speed - state_vec[1]) # Difference between speeds
-    return np.abs(ego_speed) # Difference between speeds
+    return np.abs(ego_speed) # Raw speed

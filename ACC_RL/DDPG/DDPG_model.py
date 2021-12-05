@@ -25,7 +25,7 @@ class Actor_DDPG(torch.nn.Module):
         self.state_embedder = torch.nn.Sequential(*modules)
 
         self.fc_action = torch.nn.Linear(hidden_dims[-1], action_dim)
-        self.init_weights()
+        #self.init_weights()
 
     def forward(self, x):
         x = self.state_embedder(x)
@@ -39,7 +39,7 @@ class Actor_DDPG(torch.nn.Module):
         #     if isinstance(layer, torch.nn.Linear):
         #         torch.nn.init.normal_(layer.bias.data, mean = 100000, std = 1000)
 
-        torch.nn.init.normal_(self.fc_action.bias.data[:-1], mean = 1000000, std = 1000)
+        torch.nn.init.normal_(self.fc_action.bias.data[:-1], mean = 1e6, std = 1000)
         torch.nn.init.constant_(self.fc_action.bias.data[-1], 0)
 
 class Critic_DDPG(torch.nn.Module):

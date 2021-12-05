@@ -20,27 +20,35 @@ def main():
     trainer = DDPGTrainer(
         state_dim = 11,
         action_dim = 3,
-        gamma = 0.9, # Discounting
-        exploration_noise = 10,
-        actor_lr = 0.01,
-        critic_lr = 0.01,
+        gamma = 1, 
+        exploration_noise = torch.tensor([1000, 1000, 10]),
+        actor_lr = 1,
+        critic_lr = 1,
         state_transform = transform_state,
-        actor_layers=[32, 32]
+        actor_layers=[32, 32],
+        batch_size = 32
     )
 
     # Initialize environment
     env = Environment(
         drive_trace = 'IM240',
-        max_episodes_replay_buffer = 1e5
+        max_episodes_replay_buffer = 1e3
     )
 
-    epochs = 1000
+    epochs = 500
     rewards = []
 
     for e in trange(epochs):
-        r = env.TD_run_episode(trainer = trainer, cutoff = 3000, SOC = 10)
+        down_weight = (1 / (e + 1)) ** (0.5)
+        r = env.TD_run_episode(
+            trainer = trainer, 
+            cutoff = 3000, 
+            SOC = 10, 
+            update_freq=500,
+            explore_noise_weight= torch.tensor([down_weight, down_weight, down_weight])
+        )
         #print('OPTIMIZING')
-        trainer.optimize(env.replay_buffer)
+        #trainer.optimize(env.replay_buffer)
         rewards.append(r * 1e2)
 
     plt.plot(rewards)
