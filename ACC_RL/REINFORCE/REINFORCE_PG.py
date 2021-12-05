@@ -1,62 +1,110 @@
 import torch
+from torch.autograd import Variable
+import torch.autograd as autograd
+import numpy as np
+import torch.nn as nn
 import torch.nn.functional as F
+import torch.optim as optim
+from torch.distributions import Normal
 
-class Actor(torch.nn.Module):
+device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+
+class REINFORCE:
+    
+    def __init__(self, num_inputs = 17, hidden_size = [32, 64, 32], action_space = 3, lr_pi = 3e-4,\
+                 lr_vf = 1e-3, gamma = 0.99, train_v_iters = 1):
+
+        self.gamma = gamma
+        self.action_space = action_space
+        self.policy = Gaussian_pi(num_inputs, hidden_size, action_space)
+        self.policy_optimizer = optim.Adam(self.policy.parameters(), lr = lr_pi)
+        self.train_v_iters = train_v_iters 
+
+    def select_action(self, state):
+        state = torch.from_numpy(state).float().unsqueeze(0) #make tensor object
+        mean, stdev = self.policy(state)
+
+        normaldist = Normal(mean, stdev)
+        action = normaldist.sample()
+        ln_prob = normaldist.log_prob(action)
+        ln_prob = ln_prob.sum()
+        action = torch.tanh(action)
+        action = action.numpy()
+
+        return action[0], ln_prob
+
+    def train(self, trajectory):
+        '''
+        Trajectory: list of the form [(state, action, lnP(a_t|s_t),reward),...]
+        Using the "rewards-to-go" forulation of policy gradient as it is a bit easier
+        to implement in my opinion
+        '''
+        states = [item[0] for item in trajectory]
+        actions = [item[1] for item in trajectory]
+        log_probs = [item[2] for item in trajectory]
+        rewards = [item[3] for item in trajectory]
+
+        #Rewards-to-go formulation
+        R = 0
+        returns = []
+        for r in rewards[::=1]:
+            R = r + self.gamma * R
+            returns.insert(0, R)
+        returns = torch.tensor(returns)
+
+        policy_loss = []
+        for log_prob, R in zip(log_probs, returns):
+            policy_loss.append( - log_prob * R)
+
+        policy_loss = torch.stack(policy_loss).sum()
+        self.policy_optimizer.zero_grad()
+        policy_loss.backward()
+        self.policy_optimizer.step()
+
+        return policy_loss
+
+
+
+class Gaussian_pi(nn.Module):
     '''
-    Actor network (policy network) for actor-critic method
-        - Uses Gaussian sampling for action
-
-    Based loosely on VAE architecture: 
-        https://github.com/AntixK/PyTorch-VAE/blob/master/models/vanilla_vae.py
-
-    Args:
-        input_len (int): length of input
+    Consists of a nn with 1 hidden layer. Outputs mean and log standard deviation (parameters)
+    of a gaussian policy
     '''
 
-    def __init__(self, 
-            input_len, 
-            action_size,
-            hidden_dims = [32, 64, 32] 
-        ):
-        super().__init__()
+    def __init__(self, num_inputs, hidden_size, action_space):
 
-        modules = []
+        super(Gaussian_pi, self).__init__()
+        self.action_space = action_space
+        num_outputs = action_space.shape[0]
 
-        # Build the state embedder model:
-        for i in range(len(hidden_dims)):
-            input_dim = input_len if i == 0 else hidden_dims[i-1]
+        self.linear = nn.Linear(num_inputs, hidden_size)
+        self.mean = nn.Linear(hidden_size, num_outputs)
+        self.log_stdev = nn.Linear(hidden_size, num_outputs)
 
-            # Each unit is linear -> leaky relu (parameterized ReLU)
-            modules.append(torch.nn.Sequential(
-                torch.nn.Linear(input_dim, hidden_dims[i]),
-                torch.nn.LeakyReLU()))
+    def forward(self, inputs):
+        x = inputs
+        x = F.relu(self.linear(x))
+        mean = self.mean(x)
+        log_stdev = self.log_stdev(x)
+        stdev = log_stdev.exp()
+        
+        return mean, stdev
 
-        self.state_embedder = torch.nn.Sequential(*modules)
+class Softmax_pi(nn.Module):
+    '''
+    Softmax action selection
+    '''
 
-        self.fc_mu = torch.nn.Linear(hidden_dims[-1], action_size)
-        self.fc_var = torch.nn.Linear(hidden_dims[-1], action_size)
+    def __init__(self, num_inputs, hidden_size, action_space):
 
-    def encode(self, x):
-        x = self.state_embedder(x) # State embedding
-        mu = self.fc_mu(x) # Mu of Gaussian
-        log_var = self.fc_var(x) # Log of variance (still need to exp())
+        super(Softmax_pi, self).__init__()
+        num_outputs = action_space
+        self.linear1 = nn.Linear(num_inputs, hidden_size)
+        self.linear2 = nn.Linear(hidden_size, num_outputs)
 
-        return [mu, log_var]
+    def forward(self, inputs):
+        x = inputs
+        x = F.relu(self.linear1(x))
+        action_scores = self.linear2(x)
 
-    def reparameterize(self, mu, logvar):
-        std = torch.exp(0.5 * logvar) # Gets standard deviation
-        eps = torch.randn_like(std) # Gets N(0,1) vector
-        return eps * std + mu
-
-    def forward(self, x):
-        mu, log_var = self.encode(x)
-        action = self.reparameterize(mu, log_var)
-        return [action, mu, log_var]
-
-
-    def loss_function(self):
-        pass
-
-class Critic(torch.nn.Module):
-    def __init__(self):
-        pass
+        return F.softmax(action_scores)
