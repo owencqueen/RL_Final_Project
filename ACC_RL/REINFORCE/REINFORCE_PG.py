@@ -47,7 +47,7 @@ class REINFORCE:
         #Rewards-to-go formulation
         R = 0
         returns = []
-        for r in rewards[::=1]:
+        for r in rewards[::-1]:
             R = r + self.gamma * R
             returns.insert(0, R)
         returns = torch.tensor(returns)
