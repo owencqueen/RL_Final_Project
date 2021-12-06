@@ -1,3 +1,4 @@
+import os
 import torch
 import torch.nn.functional as F
 from torch.autograd import Variable
@@ -127,4 +128,19 @@ class DDPGTrainer:
         soft_update(self.copy_critic, self.critic)
         soft_update(self.copy_actor, self.actor)
 
+    def save_model(self, prefix = ''):
+        '''
+        Saves models locally for use later
+        '''
+        torch.save(self.copy_actor.state_dict(), os.path.join('Models', '{}actor.pt'.format(prefix)))
+        torch.save(self.copy_critic.state_dict(), os.path.join('Models', '{}critic.pt'.format(prefix)))
 
+    def load_models(self, prefix = ''):
+        '''
+        Loads models from saved
+        '''
+        self.actor.load_state_dict(torch.load(os.path.join('Models', '{}actor.pt'.format(prefix))))
+        self.critic.load_state_dict(torch.load(os.path.join('Models', '{}critic.pt'.format(prefix))))
+
+        hard_update(self.copy_critic, self.critic)
+        hard_update(self.copy_actor, self.actor)
