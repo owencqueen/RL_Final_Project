@@ -1,4 +1,3 @@
-import os
 import torch
 import torch.nn.functional as F
 from torch.autograd import Variable
@@ -57,19 +56,28 @@ class DDPGTrainer:
             critic_lr: float = 0.1,
             state_transform: Callable[[torch.Tensor], torch.Tensor] = torch.nan_to_num,
             actor_layers = [32, 64, 32],
+            device = None
         ):
 
         self.gamma = gamma
         self.batch_size = batch_size
         self.explore_noise = exploration_noise
         self.state_transform = state_transform
+        self.device = device
         
         self.actor = Actor(state_dim, action_dim, actor_layers)
         self.copy_actor = Actor(state_dim, action_dim, actor_layers)
-        self.actor_optimizer = torch.optim.Adam(self.actor.parameters(), actor_lr)
-
+    
         self.critic = Critic(state_dim, action_dim)
         self.copy_critic = Critic(state_dim, action_dim)
+        
+        # Convert to device:
+        self.actor.to(self.device)
+        self.copy_actor.to(self.device)
+        self.critic.to(self.device)
+        self.copy_critic.to(self.device)
+
+        self.actor_optimizer = torch.optim.Adam(self.actor.parameters(), actor_lr)
         self.critic_optimizer = torch.optim.Adam(self.critic.parameters(), critic_lr)
 
         # Copy parameters of critic and actor
@@ -144,3 +152,5 @@ class DDPGTrainer:
 
         hard_update(self.copy_critic, self.critic)
         hard_update(self.copy_actor, self.actor)
+
+
