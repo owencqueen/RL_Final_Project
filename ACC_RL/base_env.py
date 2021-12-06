@@ -8,7 +8,9 @@ from typing import Union
 
 from Blazer_Model import Model
 
-from reward_funcs import testing_reward, headway_reward, speed_match_reward
+from reward_funcs import speed_match_reward, raw_speed_reward
+
+mydevice = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 """
 Step the blazer model simulation. Must call reset first. 
@@ -39,8 +41,10 @@ ret: state (np.ndarray)
 """
 
 
-basic_opt_mask = torch.zeros(16, dtype=torch.bool)
-basic_opt_mask[3] = 1 # Basic optimization mask only tries to optimize target vehicle distance
+reward_func_options = {
+    1: raw_speed_reward,
+    2: speed_match_reward
+}
 
 class TDBufferEntry:
     '''
@@ -69,11 +73,12 @@ class ReplayBuffer:
     Replay buffer class to manage sampling, entries, etc.
     '''
 
-    def __init__(self, max_size):
+    def __init__(self, max_size, device = None):
 
         # Use deque because O(1) efficiency in pop front and pop back
         self.buffer = deque()
         self.max_size = max_size
+        self.device = device
 
     def TD_entry(self, s1, a1, r1, s2):
 
@@ -118,10 +123,10 @@ class ReplayBuffer:
             s2_tensors.append(samp[i].s2)
 
 
-        s1 = torch.autograd.Variable(torch.stack(s1_tensors))
-        a1 = torch.autograd.Variable(torch.stack(a1_tensors))
-        r1 = torch.autograd.Variable(torch.stack(r1_tensors))
-        s2 = torch.autograd.Variable(torch.stack(s2_tensors))
+        s1 = torch.autograd.Variable(torch.stack(s1_tensors)).to(self.device)
+        a1 = torch.autograd.Variable(torch.stack(a1_tensors)).to(self.device)
+        r1 = torch.autograd.Variable(torch.stack(r1_tensors)).to(self.device)
+        s2 = torch.autograd.Variable(torch.stack(s2_tensors)).to(self.device)
         
         return s1, a1, r1, s2
 
@@ -136,26 +141,17 @@ class Environment:
     '''
     def __init__(self, 
             drive_trace = 'US06',
-            feature_mask = None,
-            optimize_mask = None,
-            reward_weights = None,
+            reward_func_option = 1,
             max_episodes_replay_buffer = 50,
+            device = None
             ):
 
         self.env = Model(automatic_control=False)
         self.drive_trace = drive_trace
-
-        if isinstance(feature_mask, str): # String options for feature mask
-            if feature_mask == 'safety':
-                self.feature_mask = torch.tensor(([1] * 12 + [0] * 4), dtype=bool) 
-
-        # Establish replay buffer:
-        # self.replay_buffer_X = []
-        # self.replay_buffer_y = []
-        # self.replay_buffer_actions = []
+        self.device = device
 
         # Initialize Replay buffer:
-        self.replay_buffer = ReplayBuffer(max_size = max_episodes_replay_buffer)
+        self.replay_buffer = ReplayBuffer(max_size = max_episodes_replay_buffer, device = self.device)
 
         self.max_ep_buffer = max_episodes_replay_buffer
 
@@ -209,62 +205,13 @@ class Environment:
 
             s1 = s2.detach().clone()
 
-        # Assign returns for each:
-        # self.replay_buffer_y += [0] * num_steps
-        # episode_return = 0
-        # for i in range(1, len(rewards) + 1):
-        #     episode_return = rewards[-i] + episode_return * self.discount
-        #     self.replay_buffer_y[-i] = episode_return
-
-        # # Adjust all buffers (if needed)
-        # self.adjust_buffers()
-
         return reward_sum
 
     def run_step(self, agent):
         pass
 
-    # def add_to_buffer(self, X, action):
-
-    #     self.replay_buffer_X.append(X)
-    #     self.replay_buffer_actions.append(action)
-
-    #     if len(self.replay_buffer_X) > self.max_ep_buffer:
-    #         self.replay_buffer_X.pop(0)
-    #         self.replay_buffer_actions.pop(0)
-
-    # def adjust_buffers(self):
-
-    #     # # Error-check:
-    #     # assert (len(self.replay_buffer_X) == len(self.replay_buffer_y)) \
-    #     #     and (len(self.replay_buffer_X) == len(self.replay_buffer_actions)), "Buffers not all same size - ERROR"
-
-    #     # adjust_diff = len(self.replay_buffer_X) - self.max_ep_buffer
-
-    #     # if adjust_diff > 0:
-    #     #     # Trim the buffers:
-    #     #     self.replay_buffer_X = self.replay_buffer_X[adjust_diff:]
-    #     #     self.replay_buffer_y = self.replay_buffer_y[adjust_diff:]
-    #     #     self.replay_buffer_actions = self.replay_buffer_actions[adjust_diff:]
-        
-    # def sample_buffer(self, batch_size = 32):
-    #     '''
-    #     Randomly samples the replay buffer
-    #     '''
-    #     # TODO - Implement more sophisticated replay buffer
-
-    #     indices = random.sample(list(range(len(self.replay_buffer_X))), k = batch_size)
-
-    #     Xbatch = [self.replay_buffer_X[i] for i in indices]
-    #     ybatch = [self.replay_buffer_y[i] for i in indices]
-    #     action_batch = [self.replay_buffer_actions[i] for i in indices]
-
-    #     return Xbatch, ybatch, action_batch
-
     def reward(self, state):
-        r = speed_match_reward(state)
-        #print('reward', r)
+        r = raw_speed_reward(state)
         return r
-        #return headway_reward(state)
 
         

@@ -1,4 +1,4 @@
-import sys; sys.path.append('..')
+import sys, pickle, os, gc; sys.path.append('..')
 import torch
 import matplotlib.pyplot as plt
 from tqdm import trange
@@ -32,17 +32,17 @@ def main():
     # Initialize environment
     env = Environment(
         drive_trace = 'IM240',
-        max_episodes_replay_buffer = 1e3
+        max_episodes_replay_buffer = 1000
     )
 
-    epochs = 500
+    epochs = 100
     rewards = []
 
     for e in trange(epochs):
         down_weight = (1 / (e + 1)) ** (0.5)
         r = env.TD_run_episode(
             trainer = trainer, 
-            cutoff = 3000, 
+            cutoff = 5000, 
             SOC = 10, 
             update_freq = 500, 
             explore_noise_weight= torch.tensor([down_weight, down_weight, down_weight])
@@ -50,9 +50,11 @@ def main():
         #print('OPTIMIZING')
         #trainer.optimize(env.replay_buffer)
         rewards.append(r * 1e2)
+        gc.collect() # Garbage collection for memory efficiency
 
-    plt.plot(rewards)
-    plt.show()
+    #plt.plot(rewards)
+    #plt.show()
+    pickle.dump(rewards, open(os.path.join('DDPG_outputs', 'DDPG_epoch=100.pickle'), 'wb'))
 
 if __name__ == '__main__':
     main()

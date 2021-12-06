@@ -43,11 +43,19 @@ def headway_reward(state_vec):
         # Trying to keep the exact distance:
         return -1.0 * np.abs(actual_headway - desired_headway)
 
-def speed_match_reward(state_vec):
+def raw_speed_reward(state_vec):
     ego_speed = state_vec[0]
-    #print('ego speed', state_vec[0])
-    #print('driver_set_speed', state_vec[1])
     if np.isnan(state_vec[0]):
         ego_speed = 0
-    #return -1.0 * np.abs(ego_speed - state_vec[1]) # Difference between speeds
     return np.abs(ego_speed) # Raw speed
+
+def speed_match_reward(state_vec):
+    ego_speed = state_vec[0]
+
+    if np.isnan(state_vec[0]):
+        ego_speed = 0
+
+    # Spot 1 in state vec is driver set speed:
+    return -1.0 * np.abs(ego_speed - state_vec[1])
+
+    

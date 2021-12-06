@@ -1,3 +1,4 @@
+import os
 import torch
 import torch.nn.functional as F
 from torch.autograd import Variable
@@ -84,19 +85,13 @@ class DDPGTrainer:
         hard_update(self.copy_actor, self.actor); hard_update(self.copy_critic, self.critic)
 
     def explore_action(self, state, explore_noise_weight = 1):
-        #print('state', state)
-        # if torch.isnan(state).any():
-        #     print('nan state', state)
-        #     exit()
         action = self.actor(self.state_transform(state))
         #print('action', action)
         #exit()
 
         # Note: GitHub repo uses Ornstein-Uhlenbeck noise here
         # Use normal for now:
-        #print('action', action)
         return (action + torch.randn_like(action) * self.explore_noise * explore_noise_weight) #* (torch.tensor([0, 1, 1]))
-        #return torch.abs(torch.nan_to_num(action) + torch.randn_like(action) * self.explore_noise) + torch.tensor([100000, 100000, 0])
 
     def exploit_action(self, state):
 

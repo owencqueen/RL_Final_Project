@@ -1,0 +1,16 @@
+#PBS -S /bin/bash
+#PBS -A ACF-UTK0011
+#PBS -l partition=beacon
+# #PBS -l feature=beacon_gpu
+#PBS -l nodes=2:ppn=16
+#PBS -l walltime=24:00:00
+#PBS -N DDPG
+
+cd $PBS_O_WORKDIR
+
+conda activate ecocar
+cd $PBS_O_WORKDIR
+
+export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/nics/b/home/oqueen/.conda/envs/ecocar/lib/
+
+python3 /lustre/haven/user/oqueen/EcoCAR/RL_Final_Project/ACC_RL/test_scripts/test_DDPG.py
