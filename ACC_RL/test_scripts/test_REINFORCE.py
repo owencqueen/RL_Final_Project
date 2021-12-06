@@ -12,7 +12,7 @@ from base_env import Environment
 def transform_state(state_vec):
 
     state_vec = state_vec.T
-    my_vec = state_vec[:13][torch.tensor([1, 1, 1, 1, 1, 0, 0, 1, 1, 1, 1, 1, 1]. dtype = bool)]
+    my_vec = state_vec[:13][torch.tensor([1, 1, 1, 1, 1, 0, 0, 1, 1, 1, 1, 1, 1], dtype = bool)]
     
     return my_vec.T
 
