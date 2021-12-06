@@ -48,7 +48,7 @@ def main():
 
     state_dim = 11
     action_dim = 3
-    hidden_dims = [32, 32]
+    hidden_dims = 32
 
     policy = REINFORCE(state_dim, hidden_dims, action_dim)
 
