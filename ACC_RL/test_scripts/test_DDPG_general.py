@@ -44,6 +44,13 @@ def parse_input_args():
     # Output file
     args_dict['output_f'] = sys.argv[13]
 
+    # Starting epoch (optional)
+    if len(sys.argv) > 14:
+        args_dict['running_ep_count'] = int(sys.argv[14])
+
+    if len(sys.argv) > 15:
+        args_dict['model_prefix'] = sys.argv[15]
+
     return args_dict
 
     # return (
@@ -87,8 +94,18 @@ def main():
     epochs = args_dict['epochs']
     rewards = []
 
+    if 'model_prefix' in args_dict.keys():
+        # Check if file exists:
+        if os.path.exists(os.path.join('Models', '{}actor.pt'.format(args_dict['model_prefix']))):
+            trainer.load_models(prefix = args_dict['model_prefix'])
+
+    if 'running_ep_count' in args_dict.keys():
+        evec = list(range(args_dict['running_ep_count'], args_dict['running_ep_count'] + epochs))
+    else:
+        evec = list(range(epochs))
+
     for e in trange(epochs):
-        down_weight = (1 / (e + 1)) ** (1 / args_dict['dweight_factor'])
+        down_weight = (1 / (evec[e] + 1)) ** (1 / args_dict['dweight_factor'])
         r = env.TD_run_episode(
             trainer = trainer, 
             cutoff = args_dict['cutoff'], 
@@ -99,6 +116,9 @@ def main():
         #print('OPTIMIZING')
         #trainer.optimize(env.replay_buffer)
         rewards.append(r)
+
+    if 'model_prefix' in args_dict.keys():
+        trainer.save_model(prefix = args_dict['model_prefix'])
 
     #plt.plot(rewards)
     #plt.show()
