@@ -44,7 +44,7 @@ def main():
             trainer = trainer, 
             cutoff = 3000, 
             SOC = 10, 
-            update_freq=500,
+            update_freq = 500, 
             explore_noise_weight= torch.tensor([down_weight, down_weight, down_weight])
         )
         #print('OPTIMIZING')

@@ -15,7 +15,7 @@ Step the blazer model simulation. Must call reset first.
 
 action: np.ndarray (3,) (1-dimensional)
     0: Engine power (W)
-    1: Motor Power(W)
+    1: Motor Power (W)
     2: Foundation Brakes Power (W)
 
 ret: state (np.ndarray)
