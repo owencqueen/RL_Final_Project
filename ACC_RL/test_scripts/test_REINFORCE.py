@@ -57,7 +57,7 @@ def main():
     save_rewards = []
     
 
-    while total_epochs < max_epochs:
+    while total_episodes < max_episodes:
         obs = env.reset()
         done = False
         trajectory = []
