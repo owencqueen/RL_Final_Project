@@ -75,7 +75,7 @@ class Gaussian_pi(nn.Module):
 
         super(Gaussian_pi, self).__init__()
         self.action_dim = action_dim
-        num_outputs = action_dim.shape[0]
+        num_outputs = action_dim
 
         self.linear = nn.Linear(state_dim, hidden_dims)
         self.mean = nn.Linear(hidden_dims, num_outputs)
