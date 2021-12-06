@@ -22,7 +22,7 @@ def evaluate_policy(policy, env, eval_episodes = 10):
         obs = env.reset()
         done = False
         while not done:
-            action, log_prob = policy.select_actionb(np.array(obs))
+            action, log_prob = policy.select_action(np.array(obs))
             obs, reward, done, _ = env.step(action)
             avg_reward += reward
         avg_reward /= eval_episodes
