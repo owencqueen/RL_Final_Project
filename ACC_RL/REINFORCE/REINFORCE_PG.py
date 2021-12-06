@@ -11,12 +11,12 @@ device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 class REINFORCE:
     
-    def __init__(self, num_inputs = 17, hidden_size = [32, 64, 32], action_space = 3, lr_pi = 3e-4,\
-                 lr_vf = 1e-3, gamma = 0.99, train_v_iters = 1):
+    def __init__(self, state_dim = 17, hidden_dims = [32, 64, 32], action_dim = 3, lr_pi = 3e-4,\
+                 gamma = 0.99, train_v_iters = 1):
 
         self.gamma = gamma
-        self.action_space = action_space
-        self.policy = Gaussian_pi(num_inputs, hidden_size, action_space)
+        self.action_dim = action_dim
+        self.policy = Gaussian_pi(state_dim, hidden_dims, action_dim)
         self.policy_optimizer = optim.Adam(self.policy.parameters(), lr = lr_pi)
         self.train_v_iters = train_v_iters 
 
@@ -71,15 +71,15 @@ class Gaussian_pi(nn.Module):
     of a gaussian policy
     '''
 
-    def __init__(self, num_inputs, hidden_size, action_space):
+    def __init__(self, state_dim, hidden_dims, action_dim):
 
         super(Gaussian_pi, self).__init__()
-        self.action_space = action_space
-        num_outputs = action_space.shape[0]
+        self.action_dim = action_dim
+        num_outputs = action_dim.shape[0]
 
-        self.linear = nn.Linear(num_inputs, hidden_size)
-        self.mean = nn.Linear(hidden_size, num_outputs)
-        self.log_stdev = nn.Linear(hidden_size, num_outputs)
+        self.linear = nn.Linear(state_dim, hidden_dims)
+        self.mean = nn.Linear(hidden_dims, num_outputs)
+        self.log_stdev = nn.Linear(hidden_dims, num_outputs)
 
     def forward(self, inputs):
         x = inputs
@@ -95,12 +95,12 @@ class Softmax_pi(nn.Module):
     Softmax action selection
     '''
 
-    def __init__(self, num_inputs, hidden_size, action_space):
+    def __init__(self, state_dim, hidden_dims, action_dim):
 
         super(Softmax_pi, self).__init__()
-        num_outputs = action_space
-        self.linear1 = nn.Linear(num_inputs, hidden_size)
-        self.linear2 = nn.Linear(hidden_size, num_outputs)
+        num_outputs = action_dim
+        self.linear1 = nn.Linear(state_dim, hidden_dims)
+        self.linear2 = nn.Linear(hidden_dims, num_outputs)
 
     def forward(self, inputs):
         x = inputs
