@@ -11,6 +11,9 @@ from .DDPG_model import Actor_DDPG as Actor, Critic_DDPG as Critic
 TAU = 0.001
 
 def soft_update(target, source):
+    '''
+    Soft updating procedure detailed in Lillicrap et al.
+    '''
     for target_param, param in zip(target.parameters(), source.parameters()):
         # Gradual updating of target network "stabilizes learning"
         target_param.data.copy_(
@@ -18,6 +21,9 @@ def soft_update(target, source):
         )
 
 def hard_update(target, source):
+    '''
+    Copies parameters between models
+    '''
     for target_param, param in zip(target.parameters(), source.parameters()):
         target_param.data.copy_(param.data)
 
@@ -44,20 +50,22 @@ class DDPGTrainer:
         actor_layers (list, optional): List of sizes of hidden layers for the 
             actor network. Used for experimentation with different network 
             structures. (:default: `[32, 64, 32]`)
+        device (str, optional): Device to switch all tensors to (allows for GPU 
+            usage) (:default: :obj:`None`)
     '''
     
     def __init__(
             self,
             state_dim: int,
             action_dim: int,
-            batch_size = 128,
+            batch_size: int = 128,
             gamma: float = 1,
             exploration_noise: Union[float, torch.Tensor] = 100,
             actor_lr: float = 0.1,
             critic_lr: float = 0.1,
             state_transform: Callable[[torch.Tensor], torch.Tensor] = torch.nan_to_num,
-            actor_layers = [32, 64, 32],
-            device = None
+            actor_layers: list = [32, 64, 32],
+            device: str = None
         ):
 
         self.gamma = gamma
@@ -84,7 +92,18 @@ class DDPGTrainer:
         # Copy parameters of critic and actor
         hard_update(self.copy_actor, self.actor); hard_update(self.copy_critic, self.critic)
 
-    def explore_action(self, state, explore_noise_weight = 1):
+    def explore_action(self, state: torch.Tensor, explore_noise_weight: float = 1):
+        '''
+        Exploration action for use during training
+
+        Args:
+            state (torch.Tensor): State vector for input to actor
+            explore_noise_weight (float, optional): Weight by which to multiply exploration 
+                noise (:default: :obj:`1`)
+
+        Returns:
+            action (torch.Tensor): Action output of actor
+        '''
         action = self.actor(self.state_transform(state))
         #print('action', action)
         #exit()
@@ -94,10 +113,22 @@ class DDPGTrainer:
         return (action + torch.randn_like(action) * self.explore_noise * explore_noise_weight) #* (torch.tensor([0, 1, 1]))
 
     def exploit_action(self, state):
+        '''
+        Just like explore action, but outputs deterministic action
+        '''
 
         return self.actor(Variable(state))
 
     def optimize(self, replay_buffer):
+        '''
+        Optimizes the actor-critic system
+
+        Args:   
+            replay_buffer (ReplayBuffer object): Replay buffer as implemented in base_env
+                to use for sampling state-action pairs
+
+        No return value
+        '''
 
         s1, a1, r1, s2 = replay_buffer.TD_sample(batch_size = self.batch_size)
 

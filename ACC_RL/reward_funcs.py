@@ -1,6 +1,8 @@
 import torch
 import numpy as np
 
+# Reward functions
+
 """
 Step the blazer model simulation. Must call reset first. 
 

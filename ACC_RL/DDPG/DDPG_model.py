@@ -1,7 +1,17 @@
 import torch
 import torch.nn.functional as F
 
+# Networks for DDPG
+
 class Actor_DDPG(torch.nn.Module):
+    '''
+    Actor/policy network for DDPG
+
+    Args:
+        state_dim (int): Dimension of input state
+        action_dim (int): Dimension of output action
+        hidden_dims (list): In order, dimension of hidden layers
+    '''
 
     def __init__(
             self,
@@ -34,15 +44,19 @@ class Actor_DDPG(torch.nn.Module):
 
 
     def init_weights(self):
-        # Init all weights in model
-        # for layer in self.state_embedder.modules():
-        #     if isinstance(layer, torch.nn.Linear):
-        #         torch.nn.init.normal_(layer.bias.data, mean = 100000, std = 1000)
+        ''' Init all weights in model '''
 
         torch.nn.init.normal_(self.fc_action.bias.data[:-1], mean = 1e6, std = 1000)
         torch.nn.init.constant_(self.fc_action.bias.data[-1], 0)
 
 class Critic_DDPG(torch.nn.Module):
+    '''
+    Critic/value network for DDPG 
+    
+    Args:
+        state_dim (int): Dimension of input state
+        action_dim (int): Dimension of input action
+    '''
     def __init__(self, state_dim, action_dim):
         super().__init__()
 
@@ -65,11 +79,7 @@ class Critic_DDPG(torch.nn.Module):
         state_embed = self.state_net(state)
         action_embed =  self.action_net(action)
 
-        # print('state size', state_embed.shape)
-        # print('action size', action_embed.shape)
-
         # Concatenate and score:
         x = torch.squeeze(torch.cat((state_embed, action_embed), dim = 1))
-        #print('x size', x.shape)
         x = self.final_score(x)
         return x

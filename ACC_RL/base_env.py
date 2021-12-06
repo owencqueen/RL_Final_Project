@@ -10,7 +10,7 @@ from Blazer_Model import Model
 
 from reward_funcs import speed_match_reward, raw_speed_reward
 
-mydevice = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+# Environment driver for ACC simulation in RL setup
 
 """
 Step the blazer model simulation. Must call reset first. 
@@ -134,10 +134,13 @@ class Environment:
     '''
     Wrapper on the Blazer Model environment that performs preparation/
         sampling for RL models
-        - Performs batching, with potential for online learning
+        - Performs online learning for DDPG
 
     Args:
-
+        drive_trace (str, optional): 
+        reward_func_option (int, optional):
+        max_episodes_replay_buffer (int, optional):
+        device (str, optional):  
     '''
     def __init__(self, 
             drive_trace = 'US06',
@@ -154,9 +157,7 @@ class Environment:
         self.replay_buffer = ReplayBuffer(max_size = max_episodes_replay_buffer, device = self.device)
 
         self.max_ep_buffer = max_episodes_replay_buffer
-
-        self.reward_weights = reward_weights
-        self.optimize_mask = optimize_mask
+        self.reward_func_option = reward_func_option
 
 
     def TD_run_episode(self, 
@@ -211,7 +212,7 @@ class Environment:
         pass
 
     def reward(self, state):
-        r = raw_speed_reward(state)
+        r = reward_func_options[self.reward_func_option](state)
         return r
 
         
