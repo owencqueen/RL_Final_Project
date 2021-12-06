@@ -11,7 +11,7 @@ device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 class REINFORCE:
     
-    def __init__(self, state_dim = 17, hidden_dims = [32, 64, 32], action_dim = 3, lr_pi = 3e-4,\
+    def __init__(self, state_dim = 11, hidden_dims = [32, 32], action_dim = 3, lr_pi = 3e-4,\
                  gamma = 0.99, train_v_iters = 1):
 
         self.gamma = gamma
