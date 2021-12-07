@@ -9,7 +9,14 @@ from torch.distributions import Normal
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
-class REINFORCE:
+def transform_state(state_vec):
+
+    state_vec = state_vec.T
+    my_vec = state_vec[:13][torch.tensor([1, 1, 1, 1, 1, 0, 0, 1, 1, 1, 1, 1, 1], dtype = bool)]
+    
+    return my_vec.T
+
+class REINFORCE_trainer:
     
     def __init__(self, state_dim = 11, hidden_dims = 32, action_dim = 3, lr_pi = 3e-4,\
                  gamma = 0.99, train_v_iters = 1):
@@ -21,7 +28,7 @@ class REINFORCE:
         self.train_v_iters = train_v_iters 
 
     def select_action(self, state):
-        state = torch.from_numpy(state).float().unsqueeze(0) #make tensor object
+        state = torch.from_numpy(transform_state(state)).float().unsqueeze(0) #make tensor object
         mean, stdev = self.policy(state)
 
         normaldist = Normal(mean, stdev)

@@ -6,15 +6,10 @@ from torch.autograd import Variable
 import torch.autograd as autograd
 import numpy as np
 
-from REINFORCE.REINFORCE_PG import REINFORCE
+from REINFORCE.REINFORCE_PG import REINFORCE_trainer
 from base_env import Environment
+from Blazer_Model import Model
 
-def transform_state(state_vec):
-
-    state_vec = state_vec.T
-    my_vec = state_vec[:13][torch.tensor([1, 1, 1, 1, 1, 0, 0, 1, 1, 1, 1, 1, 1], dtype = bool)]
-    
-    return my_vec.T
 
 def evaluate_policy(policy, env, eval_episodes = 10):
     avg_reward = 0.0
@@ -23,6 +18,7 @@ def evaluate_policy(policy, env, eval_episodes = 10):
         done = False
         while not done:
             action, log_prob = policy.select_action(np.array(obs))
+            action = action.astype(np.double)
             obs, reward, done, _ = env.step(action)
             avg_reward += reward
         avg_reward /= eval_episodes
@@ -34,6 +30,7 @@ def render_policy(policy):
     while not done:
         env.render()
         action,_,_,_ = policy.select_action(np.array(obs))
+        action = action.astype(np.double)
         obs, reward, done, _ = env.step(action)
     env.close()
 
@@ -45,12 +42,12 @@ def main():
         drive_trace = 'IM240',
         max_episodes_replay_buffer = 1e3
     )
-
+    env = Model(automatic_control=False)
     state_dim = 11
     action_dim = 3
     hidden_dims = 32
 
-    policy = REINFORCE(state_dim, hidden_dims, action_dim)
+    policy = REINFORCE_trainer(state_dim, hidden_dims, action_dim)
 
     max_episodes = 500
     total_episodes = 0
@@ -65,6 +62,7 @@ def main():
 
         while not done:
             action, ln_prob = policy.select_action(np.array(obs))
+            action = action.astype(np.double)
             next_state, reward, done, _ = env.step(action)
             trajectory.append([np.array(obs), action, ln_prob, reward, next_state, done])
             obs = next_state
