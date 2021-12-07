@@ -6,6 +6,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 import torch.optim as optim
 from torch.distributions import Normal
+from test_REINFORCE import 
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
@@ -21,7 +22,7 @@ class REINFORCE:
         self.train_v_iters = train_v_iters 
 
     def select_action(self, state):
-        state = torch.from_numpy(state).float().unsqueeze(0) #make tensor object
+        state = torch.from_numpy(transform_state(state)).float().unsqueeze(0) #make tensor object
         mean, stdev = self.policy(state)
 
         normaldist = Normal(mean, stdev)
