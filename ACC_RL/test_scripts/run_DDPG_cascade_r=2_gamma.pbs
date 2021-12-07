@@ -1,0 +1,36 @@
+#PBS -S /bin/bash
+#PBS -A ACF-UTK0011
+#PBS -l partition=beacon
+# #PBS -l feature=beacon_gpu
+#PBS -l nodes=1:ppn=8
+#PBS -l walltime=24:00:00
+#PBS -N DDPG_d=1_r=1_gam=0.95
+
+cd $PBS_O_WORKDIR
+
+gamma=0.95
+actor_lr=1
+critic_lr=1
+actor_layer=1
+explore_noise=1
+batch_size=32
+drive_trace=IM240
+max_episodes_buffer=1000
+DW=1
+SOC=10
+epochs=50
+cutoff=30000
+reward=2
+
+conda activate ecocar
+cd $PBS_O_WORKDIR
+
+export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/nics/b/home/oqueen/.conda/envs/ecocar/lib/
+
+mkdir "DDPG_outputs/DDPG_d=${DW}_cutoff=${cutoff}_r=${reward}_gam=${gamma}"
+
+for i in {1..15}
+do
+    echo "DDPG_d=${DW}_cutoff=${cutoff}_r=${reward}"
+    python3 /lustre/haven/user/oqueen/EcoCAR/RL_Final_Project/ACC_RL/test_scripts/test_DDPG_general.py $gamma $actor_lr $critic_lr $actor_layer $explore_noise $batch_size $drive_trace $max_episodes_buffer $DW $SOC $epochs $cutoff "DDPG_outputs/DDPG_d=${DW}_cutoff=${cutoff}_r=${reward}_gam=${gamma}/DDPG_$i" $reward $i "DDPG_d=${DW}_cutoff=${cutoff}_r=${reward}_gam=${gamma}_"
+done

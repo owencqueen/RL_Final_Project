@@ -7,12 +7,10 @@ from DDPG.train import DDPGTrainer
 from base_env import Environment
 
 def transform_state(state_vec):
-    #state_vec = torch.nan_to_num(state_vec)
 
     state_vec = state_vec.T
 
     my_vec = state_vec[:13][torch.tensor([1, 1, 1, 1, 1, 0, 0, 1, 1, 1, 1, 1, 1], dtype = bool)]
-    #print('LEN', my_vec.shape)
     return my_vec.T
 
 def main():
