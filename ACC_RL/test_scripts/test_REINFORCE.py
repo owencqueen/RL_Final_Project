@@ -10,12 +10,6 @@ from REINFORCE.REINFORCE_PG import REINFORCE_trainer
 from base_env import Environment
 from Blazer_Model import Model
 
-def transform_state(state_vec):
-
-    state_vec = state_vec.T
-    my_vec = state_vec[:13][torch.tensor([1, 1, 1, 1, 1, 0, 0, 1, 1, 1, 1, 1, 1], dtype = bool)]
-    
-    return my_vec.T
 
 def evaluate_policy(policy, env, eval_episodes = 10):
     avg_reward = 0.0
