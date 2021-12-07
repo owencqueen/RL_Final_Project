@@ -1,0 +1,30 @@
+#PBS -S /bin/bash
+#PBS -A ACF-UTK0011
+#PBS -l partition=beacon
+# #PBS -l feature=beacon_gpu
+#PBS -l nodes=1:ppn=8
+#PBS -l walltime=24:00:00
+#PBS -N REINFORCE_r=2_gam=1
+
+cd $PBS_O_WORKDIR
+
+gamma=1
+lr=0.0003
+drive_trace=IM240
+SOC=10
+epochs=50
+cutoff=30000
+reward=2
+
+conda activate ecocar
+cd $PBS_O_WORKDIR
+
+export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/nics/b/home/oqueen/.conda/envs/ecocar/lib/
+
+mkdir "REINFORCE_outputs/REINFORCE_gam=${gamma}_r=${reward}"
+
+for i in {1..15}
+do
+    echo "REINFORCE_d=${DW}_cutoff=${cutoff}_r=${reward}"
+    python3 /lustre/haven/user/oqueen/EcoCAR/RL_Final_Project/ACC_RL/test_scripts/test_REINFORCE_general.py $gamma $lr $drive_trace $SOC $epochs $cutoff $reward "REINFORCE_outputs/REINFORCE_gam=${gamma}_r=${reward}/REINFORCE_$i.pickle" "REINFORCE_Models/REINFORCE_gam=${gamma}_r=${reward}_model.pt"
+done

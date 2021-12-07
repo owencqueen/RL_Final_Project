@@ -137,10 +137,12 @@ class Environment:
         - Performs online learning for DDPG
 
     Args:
-        drive_trace (str, optional): 
-        reward_func_option (int, optional):
-        max_episodes_replay_buffer (int, optional):
-        device (str, optional):  
+        drive_trace (str, optional): Drive trace option for environment.
+        reward_func_option (int, optional): Reward function option. 1 is raw
+            speed, 2 is speed control reward.
+        max_episodes_replay_buffer (int, optional): Maximum number of episodes
+            to keep in the replay buffer
+        device (str, optional): Pytorch device (allows for GPU usage)
     '''
     def __init__(self, 
             drive_trace = 'US06',

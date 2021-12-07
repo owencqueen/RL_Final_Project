@@ -1,4 +1,4 @@
-import sys; sys.path.append('..')
+import sys, pickle; sys.path.append('..')
 import torch
 import matplotlib.pyplot as plt
 from tqdm import trange
@@ -12,29 +12,38 @@ from Blazer_Model import Model
 from reward_funcs import raw_speed_reward
 from reward_funcs import speed_match_reward
 
-torch.autograd.set_detect_anomaly(True)
+def parse_argv():
+    args_dict = {}
+    args_dict['gamma'] = float(sys.argv[1])
+    args_dict['lr'] = float(sys.argv[2])
+    args_dict['drive_trace'] = sys.argv[3]
+    args_dict['SOC'] = float(sys.argv[4])
+    args_dict['epochs'] = int(sys.argv[5])
+    args_dict['cutoff'] = int(sys.argv[6])
+    args_dict['reward'] = int(sys.argv[7])
+    args_dict['results_path'] = sys.argv[8]
+    args_dict['model_path'] = sys.argv[9]
 
-SOC = 10
-drive_trace = 'IM240'
-reward_func_option = 1
+    return args_dict
 
-def evaluate_policy(policy, env, eval_episodes = 10):
-    reward_sum = 0.0
-    state = env.reset()
-    for _ in range(eval_episodes):
+
+# def evaluate_policy(policy, env, eval_episodes = 10):
+#     reward_sum = 0.0
+#     state = env.reset()
+#     for _ in range(eval_episodes):
         
-        done = False
-        #while not done:
-        for _ in trange(len(env)):
-            action, log_prob = policy.select_action(np.array(state))
-            action = action.astype(np.double)
+#         done = False
+#         #while not done:
+#         for _ in trange(len(env)):
+#             action, log_prob = policy.select_action(np.array(state))
+#             action = action.astype(np.double)
     
-            next_state = env.step(action)
-            reward = get_reward(next_state)
-            next_state = torch.autograd.Variable(torch.from_numpy(next_state)).float()
-            reward_sum += reward
+#             next_state = env.step(action)
+#             reward = get_reward(next_state)
+#             next_state = torch.autograd.Variable(torch.from_numpy(next_state)).float()
+#             reward_sum += reward
        
-        print("avg reward is: {0}".fomat(reward_sum))
+#         print("avg reward is: {0}".fomat(reward_sum))
 
 # def render_policy(policy):
 #     state = env.reset()
@@ -48,23 +57,44 @@ def evaluate_policy(policy, env, eval_episodes = 10):
 #         next_state = torch.autograd.Variable(torch.from_numpy(next_state)).float()
 #     env.close()
 
-def get_reward(state):
+def get_reward(state, opt):
+    if opt == 1:
         r = raw_speed_reward(state)
-        return r
+    else:
+        r = speed_match_reward(state)
+    return r
+
+
+
 
 def main():
     env = Model(automatic_control=False)
+
+    args_dict = parse_argv()
+
+    SOC = args_dict['SOC']
+    drive_trace = args_dict['drive_trace']
+
+    # Set:
     state_dim = 11
     action_dim = 3
     hidden_dims = 32
 
-    policy = REINFORCE_trainer(state_dim, hidden_dims, action_dim)
+    policy = REINFORCE_trainer(
+        state_dim, 
+        hidden_dims, 
+        action_dim,
+        lr_pi = args_dict['lr'],
+        gamma = args_dict['gamma']
+        )
 
-    max_episodes = 75
-    max_steps = 5000
+    max_episodes = args_dict['epochs']
+    max_steps = args_dict['cutoff']
 
     total_episodes = 0
     save_rewards = []
+
+    policy.load_model(args_dict['model_path'])
     
 
     #while total_episodes < max_episodes:
@@ -83,27 +113,21 @@ def main():
             #action = np.squeeze(action)
             next_state = env.step(action)
             #print('num nans', next_state)
-            reward = get_reward(next_state)
+            reward = get_reward(next_state, opt = args_dict['reward'])
             next_state = torch.autograd.Variable(torch.from_numpy(next_state)).float()
             trajectory.append([np.array(state), action, log_prob, reward, next_state])
             state = next_state
             episode_reward += reward
             total_steps += 1
             #print(total_steps)
-            # if total_steps > update_freq and (total_steps + 1) % update_freq == 0:
-            #     policy.train(trajectory, batch_size = None)
 
-        total_episodes += 1
-        #print(total_episodes)
-        policy_loss = policy.train(trajectory, batch_size = None)
+        policy_loss = policy.train(trajectory)
         save_rewards.append(episode_reward)
 
-        # if total_episodes % 10 == 0:
-        #     evaluate_policy(policy,env)
-        #env.close()
+    policy.dump_model(args_dict['model_path'])
 
-    plt.plot(save_rewards)
-    plt.show()
+    pickle.dump(save_rewards, open(args_dict['results_path'], 'wb'))
+
 
 if __name__ == '__main__':
     main()

@@ -1,3 +1,4 @@
+import random, os
 import torch
 from torch.autograd import Variable
 import torch.autograd as autograd
@@ -21,18 +22,31 @@ def transform_state(state_vec):
 
 class REINFORCE_trainer:
     
-    def __init__(self, state_dim = 11, hidden_dims = 32, action_dim = 3, lr_pi = 3e-4,\
-                 gamma = 0.99, train_v_iters = 1):
+    def __init__(self, 
+            state_dim = 11, 
+            hidden_dims = 32, 
+            action_dim = 3, 
+            lr_pi = 3e-4,
+            gamma = 0.99):
 
         self.gamma = gamma
         self.action_dim = action_dim
         self.policy = Gaussian_pi(state_dim, hidden_dims, action_dim)
         self.policy_optimizer = optim.Adam(self.policy.parameters(), lr = lr_pi)
-        self.train_v_iters = train_v_iters 
 
     def select_action(self, state):
         state = torch.from_numpy(transform_state(state)).float().unsqueeze(0) #make tensor object
         mean, stdev = self.policy(state)
+
+        if torch.isnan(mean).any().item() or torch.isnan(stdev).any().item():
+            # Error check
+            print('nan state', state)
+            print('nan mean', mean)
+            print('nan stdev', stdev)
+            
+
+            mean = torch.nan_to_num(mean)
+            stdev = torch.nan_to_num(stdev)
 
         normaldist = Normal(torch.squeeze(mean), torch.squeeze(stdev))
         action = normaldist.sample()
@@ -43,7 +57,7 @@ class REINFORCE_trainer:
 
         return action, ln_prob
 
-    def train(self, trajectory):
+    def train(self, trajectory, batch_size = None):
         '''
         Trajectory: list of the form [(state, action, lnP(a_t|s_t),reward),...]
         Using the "rewards-to-go" forulation of policy gradient as it is a bit easier
@@ -62,16 +76,38 @@ class REINFORCE_trainer:
             returns.insert(0, R)
         returns = torch.tensor(returns)
 
+        # samples = list(zip(log_probs, returns))
+        # if batch_size is not None:
+        #     # Sample down to a batch size
+        #     samples = random.sample(samples, k = min(len(samples), batch_size))
+
         policy_loss = []
+        #ploss_sum = torch.autograd.Variable(torch.zeros(0))
+        #for log_prob, R in zip(log_probs, returns):
         for log_prob, R in zip(log_probs, returns):
             policy_loss.append( - log_prob * R)
 
+        # ploss_sum += (-1.0 * log_prob * R).item()
+        # policy_loss.append(torch.autograd.Variable(torch.tensor(ploss_sum)))
+        #policy_loss = -1.0 * log_prob * R
+        #print(policy_loss)
+
+
+        #print('policy loss', policy_loss)
         policy_loss = torch.stack(policy_loss).sum()
+
         self.policy_optimizer.zero_grad()
         policy_loss.backward()
         self.policy_optimizer.step()
 
         return policy_loss
+
+    def load_model(self, name):
+        if os.path.exists(name):
+            self.policy.load_state_dict(name)
+
+    def dump_model(self, name):
+        torch.save(self.policy.state_dict(), name)
 
 
 
@@ -101,21 +137,21 @@ class Gaussian_pi(nn.Module):
         
         return mean, stdev
 
-class Softmax_pi(nn.Module):
-    '''
-    Softmax action selection
-    '''
+# class Softmax_pi(nn.Module):
+#     '''
+#     Softmax action selection
+#     '''
 
-    def __init__(self, state_dim, hidden_dims, action_dim):
+#     def __init__(self, state_dim, hidden_dims, action_dim):
 
-        super(Softmax_pi, self).__init__()
-        num_outputs = action_dim
-        self.linear1 = nn.Linear(state_dim, hidden_dims)
-        self.linear2 = nn.Linear(hidden_dims, num_outputs)
+#         super(Softmax_pi, self).__init__()
+#         num_outputs = action_dim
+#         self.linear1 = nn.Linear(state_dim, hidden_dims)
+#         self.linear2 = nn.Linear(hidden_dims, num_outputs)
 
-    def forward(self, inputs):
-        x = inputs
-        x = F.relu(self.linear1(x))
-        action_scores = self.linear2(x)
+#     def forward(self, inputs):
+#         x = inputs
+#         x = F.relu(self.linear1(x))
+#         action_scores = self.linear2(x)
 
-        return F.softmax(action_scores)
+#         return F.softmax(action_scores)
