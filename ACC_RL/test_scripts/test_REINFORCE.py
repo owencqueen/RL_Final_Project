@@ -76,6 +76,7 @@ def main():
             #action = action.astype(np.double)
             #action = torch.squeeze(action)
             action = np.squeeze(action.astype(np.double))
+            print(action.shape)
             next_state = env.step(action)
             reward = get_reward(next_state)
             next_state = torch.autograd.Variable(torch.from_numpy(next_state)).float()
