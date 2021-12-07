@@ -18,7 +18,7 @@ reward_func_option = 1
 
 def evaluate_policy(policy, env, eval_episodes = 10):
     reward_sum = 0.0
-    state = torch.autograd.Variable(torch.from_numpy(env.reset())).float()
+    state = env.reset()
     for _ in range(eval_episodes):
         
         done = False
@@ -34,7 +34,7 @@ def evaluate_policy(policy, env, eval_episodes = 10):
         print("avg reward is: {0}".fomat(reward_sum))
 
 def render_policy(policy):
-    state = torch.autograd.Variable(torch.from_numpy(env.reset())).float()
+    state = env.reset()
     done = False
     while not done:
         env.render()
@@ -66,7 +66,8 @@ def main():
     
 
     while total_episodes < max_episodes:
-        state = torch.autograd.Variable(torch.from_numpy(env.reset())).float()
+        #state = torch.autograd.Variable(torch.from_numpy(env.reset())).float()
+        state = env.reset()
         done = False
         trajectory = []
         episode_reward = 0
