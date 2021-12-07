@@ -60,8 +60,8 @@ def main():
 
     policy = REINFORCE_trainer(state_dim, hidden_dims, action_dim)
 
-    max_episodes = 75
-    max_steps = 5000
+    max_episodes = 20
+    max_steps = 500
 
     total_episodes = 0
     save_rewards = []
