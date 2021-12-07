@@ -44,7 +44,7 @@ def render_policy(policy):
     env.close()
 
 def get_reward(self, state):
-        r = reward_func_options[self.reward_func_option](state)
+        r = raw_speed_reward(state)
         return r
 
 
