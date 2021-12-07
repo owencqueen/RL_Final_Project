@@ -81,6 +81,7 @@ def main():
             episode_reward += reward
 
         total_episodes += 1
+        print(total_episodes)
         policy_loss = policy.train(trajectory)
         save_rewards.append(reward)
 
