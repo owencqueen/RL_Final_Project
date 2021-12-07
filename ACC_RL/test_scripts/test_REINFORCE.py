@@ -22,7 +22,8 @@ def evaluate_policy(policy, env, eval_episodes = 10):
     for _ in range(eval_episodes):
         
         done = False
-        while not done:
+        #while not done:
+        for _ in trange(len(env)):
             action, log_prob = policy.select_action(np.array(state))
             action = action.astype(np.double)
     
@@ -82,7 +83,7 @@ def main():
             next_state = env.step(action)
             reward = get_reward(next_state)
             next_state = torch.autograd.Variable(torch.from_numpy(next_state)).float()
-            trajectory.append([np.array(state), action, log_prob, reward, next_state, done])
+            trajectory.append([np.array(state), action, log_prob, reward, next_state])
             state = next_state
             episode_reward += reward
             total_steps += 1
@@ -95,7 +96,7 @@ def main():
 
         if total_episodes % 10 == 0:
             evaluate_policy(policy,env)
-        env.close()
+        #env.close()
 
     plt.plot(save_rewards)
     plt.show()
