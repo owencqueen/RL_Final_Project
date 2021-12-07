@@ -9,7 +9,8 @@ import numpy as np
 from REINFORCE.REINFORCE_PG import REINFORCE_trainer
 from base_env import Environment
 from Blazer_Model import Model
-import reward_funcs
+from reward_funcs import raw_speed_reward
+from reward_funcs import speed_match_reward
 
 SOC = 10
 drive_trace = 'IM240'
