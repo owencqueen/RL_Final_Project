@@ -6,7 +6,7 @@ from torch.autograd import Variable
 import torch.autograd as autograd
 import numpy as np
 
-from REINFORCE.REINFORCE_PG import REINFORCE
+from REINFORCE.REINFORCE_PG import REINFORCE_trainer
 from base_env import Environment
 from Blazer_Model import Model
 
@@ -51,7 +51,7 @@ def main():
     action_dim = 3
     hidden_dims = 32
 
-    policy = REINFORCE(state_dim, hidden_dims, action_dim)
+    policy = REINFORCE_trainer(state_dim, hidden_dims, action_dim)
 
     max_episodes = 500
     total_episodes = 0
