@@ -25,7 +25,7 @@ def evaluate_policy(policy, env, eval_episodes = 10):
             action = action.astype(np.double)
     
             next_state = env.step(action)
-            reward = reward(next_state)
+            reward = get_reward(next_state)
             next_state = torch.autograd.Variable(torch.from_numpy(next_state)).float()
             reward_sum += reward
        
@@ -39,11 +39,11 @@ def render_policy(policy):
         action, log_prob = policy.select_action(np.array(state))
         action = action.astype(np.double)
         next_state = env.step(action)
-        reward = reward(next_state)
+        reward = get_reward(next_state)
         next_state = torch.autograd.Variable(torch.from_numpy(next_state)).float()
     env.close()
 
-def reward(self, state):
+def get_reward(self, state):
         r = reward_func_options[self.reward_func_option](state)
         return r
 
@@ -73,7 +73,7 @@ def main():
             action, log_prob = policy.select_action(np.array(state))
             action = action.astype(np.double)
             next_state = env.step(action)
-            reward = reward(next_state)
+            reward = get_reward(next_state)
             next_state = torch.autograd.Variable(torch.from_numpy(next_state)).float()
             state = next_state
             episode_reward += reward
