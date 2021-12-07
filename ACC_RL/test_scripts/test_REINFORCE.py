@@ -73,7 +73,7 @@ def main():
         trajectory = []
         episode_reward = 0
 
-        while total_steps < max_steps
+        while total_steps < max_steps:
             action, log_prob = policy.select_action(np.array(state))
             #action = action.astype(np.double)
             #action = torch.squeeze(action)
