@@ -73,8 +73,9 @@ def main():
 
         while not done:
             action, log_prob = policy.select_action(np.array(state))
-            action = action.astype(np.double)
+            #action = action.astype(np.double)
             #action = torch.squeeze(action)
+            action = np.squeeze(action.astype(np.double))
             next_state = env.step(action)
             reward = get_reward(next_state)
             next_state = torch.autograd.Variable(torch.from_numpy(next_state)).float()
