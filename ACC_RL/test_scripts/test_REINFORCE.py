@@ -43,7 +43,7 @@ def render_policy(policy):
         next_state = torch.autograd.Variable(torch.from_numpy(next_state)).float()
     env.close()
 
-def get_reward(self, state):
+def get_reward(state):
         r = raw_speed_reward(state)
         return r
 
