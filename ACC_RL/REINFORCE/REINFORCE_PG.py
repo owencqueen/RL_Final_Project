@@ -34,7 +34,7 @@ class REINFORCE_trainer:
         state = torch.from_numpy(transform_state(state)).float().unsqueeze(0) #make tensor object
         mean, stdev = self.policy(state)
 
-        normaldist = Normal(mean, stdev)
+        normaldist = Normal(torch.squeeze(mean), torch.squeeze(stdev))
         action = normaldist.sample()
         ln_prob = normaldist.log_prob(action)
         ln_prob = ln_prob.sum()
