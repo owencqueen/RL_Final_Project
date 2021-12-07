@@ -41,7 +41,7 @@ class REINFORCE_trainer:
         action = torch.tanh(action)
         action = action.numpy()
 
-        return action[0], ln_prob
+        return action, ln_prob
 
     def train(self, trajectory):
         '''
