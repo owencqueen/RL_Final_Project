@@ -82,6 +82,7 @@ def main():
             next_state = env.step(action)
             reward = get_reward(next_state)
             next_state = torch.autograd.Variable(torch.from_numpy(next_state)).float()
+            trajectory.append([np.array(state), action, log_prob, reward, next_state, done])
             state = next_state
             episode_reward += reward
             total_steps += 1
