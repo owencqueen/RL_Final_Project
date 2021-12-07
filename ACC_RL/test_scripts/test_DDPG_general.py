@@ -43,13 +43,15 @@ def parse_input_args():
     args_dict['cutoff'] = int(sys.argv[12])
     # Output file
     args_dict['output_f'] = sys.argv[13]
+    # Reward function option
+    args_dict['reward'] = int(sys.argv[14])
 
     # Starting epoch (optional)
-    if len(sys.argv) > 14:
-        args_dict['running_ep_count'] = int(sys.argv[14])
-
     if len(sys.argv) > 15:
-        args_dict['model_prefix'] = sys.argv[15]
+        args_dict['running_ep_count'] = int(sys.argv[15])
+
+    if len(sys.argv) > 16:
+        args_dict['model_prefix'] = sys.argv[16]
 
     return args_dict
 
@@ -88,7 +90,8 @@ def main():
     # Initialize environment
     env = Environment(
         drive_trace = args_dict['drive_trace'],
-        max_episodes_replay_buffer = args_dict['max_eps']
+        max_episodes_replay_buffer = args_dict['max_eps'],
+        reward_func_option = args_dict['reward']
     )
 
     epochs = args_dict['epochs']
@@ -100,12 +103,15 @@ def main():
             trainer.load_models(prefix = args_dict['model_prefix'])
 
     if 'running_ep_count' in args_dict.keys():
-        evec = list(range(args_dict['running_ep_count'], args_dict['running_ep_count'] + epochs))
+        evec = list(range(args_dict['running_ep_count'] * epochs, args_dict['running_ep_count'] * epochs + epochs))
     else:
         evec = list(range(epochs))
 
     for e in trange(epochs):
-        down_weight = (1 / (evec[e] + 1)) ** (1 / args_dict['dweight_factor'])
+        if args_dict['dweight_factor'] == 0:
+            down_weight = 1
+        else:
+            down_weight = (1 / (evec[e] + 1)) ** (1 / args_dict['dweight_factor'])
         r = env.TD_run_episode(
             trainer = trainer, 
             cutoff = args_dict['cutoff'], 
