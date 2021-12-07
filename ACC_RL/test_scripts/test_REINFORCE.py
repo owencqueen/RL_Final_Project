@@ -18,6 +18,7 @@ def evaluate_policy(policy, env, eval_episodes = 10):
         done = False
         while not done:
             action, log_prob = policy.select_action(np.array(obs))
+            action = action.dtype(np.double)
             obs, reward, done, _ = env.step(action)
             avg_reward += reward
         avg_reward /= eval_episodes
@@ -29,6 +30,7 @@ def render_policy(policy):
     while not done:
         env.render()
         action,_,_,_ = policy.select_action(np.array(obs))
+        action = action.dtype(np.double)
         obs, reward, done, _ = env.step(action)
     env.close()
 
@@ -60,6 +62,7 @@ def main():
 
         while not done:
             action, ln_prob = policy.select_action(np.array(obs))
+            action = action.dtype(np.double)
             next_state, reward, done, _ = env.step(action)
             trajectory.append([np.array(obs), action, ln_prob, reward, next_state, done])
             obs = next_state
