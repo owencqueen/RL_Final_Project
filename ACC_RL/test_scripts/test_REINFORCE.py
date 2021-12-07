@@ -68,22 +68,24 @@ def main():
     while total_episodes < max_episodes:
         #state = torch.autograd.Variable(torch.from_numpy(env.reset())).float()
         state = env.reset()
-        done = False
+        max_steps = 500
+        total_steps = 0
         trajectory = []
         episode_reward = 0
 
-        while not done:
+        while total_steps < max_steps
             action, log_prob = policy.select_action(np.array(state))
             #action = action.astype(np.double)
             #action = torch.squeeze(action)
             action = np.squeeze(action.astype(np.double))
             #action = np.squeeze(action)
-            print(action.shape)
             next_state = env.step(action)
             reward = get_reward(next_state)
             next_state = torch.autograd.Variable(torch.from_numpy(next_state)).float()
             state = next_state
             episode_reward += reward
+            total_steps += 1
+            print(total_steps)
 
         total_episodes += 1
         print(total_episodes)
