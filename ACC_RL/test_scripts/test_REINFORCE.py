@@ -9,6 +9,7 @@ import numpy as np
 from REINFORCE.REINFORCE_PG import REINFORCE_trainer
 from base_env import Environment
 from Blazer_Model import Model
+import reward_funcs
 
 SOC = 10
 drive_trace = 'IM240'
