@@ -9,6 +9,13 @@ from torch.distributions import Normal
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
+def transform_state(state_vec):
+
+    state_vec = state_vec.T
+    my_vec = state_vec[:13][torch.tensor([1, 1, 1, 1, 1, 0, 0, 1, 1, 1, 1, 1, 1], dtype = bool)]
+    
+    return my_vec.T
+
 class REINFORCE_trainer:
     
     def __init__(self, state_dim = 11, hidden_dims = 32, action_dim = 3, lr_pi = 3e-4,\
