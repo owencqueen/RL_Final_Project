@@ -6,7 +6,7 @@ from torch.autograd import Variable
 import torch.autograd as autograd
 import numpy as np
 
-from REINFORCE.REINFORCE_PG import REINFORCE
+from REINFORCE_PG import REINFORCE
 from base_env import Environment
 from Blazer_Model import Model
 
