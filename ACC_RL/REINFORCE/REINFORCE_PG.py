@@ -8,9 +8,9 @@ import torch.optim as optim
 from torch.distributions import Normal
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-LOG_SIG_MAX = 2
-LOG_SIG_MIN = -20
-epsilon = 1e-6
+#LOG_SIG_MAX = 2
+#LOG_SIG_MIN = -20
+#epsilon = 1e-6
 
 def transform_state(state_vec):
 
@@ -96,7 +96,7 @@ class Gaussian_pi(nn.Module):
         x = F.relu(self.linear(x))
         mean = self.mean(x)
         log_stdev = self.log_stdev(x)
-        log_std = torch.clamp(log_stdev, min=LOG_SIG_MIN, max=LOG_SIG_MAX) # We limit the variance by forcing within a range of -2,20
+        #log_std = torch.clamp(log_stdev, min=LOG_SIG_MIN, max=LOG_SIG_MAX) # We limit the variance by forcing within a range of -2,20
         stdev = log_stdev.exp()
         
         return mean, stdev
