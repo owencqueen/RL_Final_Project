@@ -38,15 +38,10 @@ class REINFORCE_trainer:
         state = torch.from_numpy(transform_state(state)).float().unsqueeze(0) #make tensor object
         mean, stdev = self.policy(state)
 
-        if torch.isnan(mean).any().item() or torch.isnan(stdev).any().item():
-            # Error check
-            print('nan state', state)
-            print('nan mean', mean)
-            print('nan stdev', stdev)
-            
-
+        if torch.isnan(mean).any().item():
             mean = torch.nan_to_num(mean)
-            stdev = torch.nan_to_num(stdev)
+        if torch.isnan(stdev).any().item():
+            stdev = torch.nan_to_num(stdev) + torch.tensor([1e-5, 1e-5, 1e-5])
 
         normaldist = Normal(torch.squeeze(mean), torch.squeeze(stdev))
         action = normaldist.sample()
@@ -104,7 +99,7 @@ class REINFORCE_trainer:
 
     def load_model(self, name):
         if os.path.exists(name):
-            self.policy.load_state_dict(name)
+            self.policy.load_state_dict(torch.load(name))
 
     def dump_model(self, name):
         torch.save(self.policy.state_dict(), name)

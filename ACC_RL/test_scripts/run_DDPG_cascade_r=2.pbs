@@ -4,7 +4,7 @@
 # #PBS -l feature=beacon_gpu
 #PBS -l nodes=1:ppn=8
 #PBS -l walltime=24:00:00
-#PBS -N DDPG_d=1_r=2
+#PBS -N DDPG_d=4_r=2
 
 cd $PBS_O_WORKDIR
 
@@ -16,7 +16,7 @@ explore_noise=1
 batch_size=32
 drive_trace=IM240
 max_episodes_buffer=1000
-DW=1
+DW=4
 SOC=10
 epochs=50
 cutoff=30000

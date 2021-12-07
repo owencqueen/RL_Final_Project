@@ -4,11 +4,11 @@
 # #PBS -l feature=beacon_gpu
 #PBS -l nodes=1:ppn=8
 #PBS -l walltime=24:00:00
-#PBS -N DDPG_d=1_r=1_gam=0.95
+#PBS -N DDPG_d=1_r=1_gam=0.9
 
 cd $PBS_O_WORKDIR
 
-gamma=0.95
+gamma=0.9
 actor_lr=1
 critic_lr=1
 actor_layer=1
@@ -32,5 +32,5 @@ mkdir "DDPG_outputs/DDPG_d=${DW}_cutoff=${cutoff}_r=${reward}_gam=${gamma}"
 for i in {1..20}
 do
     echo "DDPG_d=${DW}_cutoff=${cutoff}_r=${reward}"
-    python3 /lustre/haven/user/oqueen/EcoCAR/RL_Final_Project/ACC_RL/test_scripts/test_DDPG_general.py $gamma $actor_lr $critic_lr $actor_layer $explore_noise $batch_size $drive_trace $max_episodes_buffer $DW $SOC $epochs $cutoff "DDPG_outputs/DDPG_d=${DW}_cutoff=${cutoff}_r=${reward}_gam=${gamma}/DDPG_$i" $reward $i "DDPG_d=${DW}_cutoff=${cutoff}_r=${reward}_gam=${gamma}_"
+    python3 /lustre/haven/user/oqueen/EcoCAR/RL_Final_Project/ACC_RL/test_scripts/test_DDPG_general.py $gamma $actor_lr $critic_lr $actor_layer $explore_noise $batch_size $drive_trace $max_episodes_buffer $DW $SOC $epochs $cutoff "DDPG_d=${DW}_cutoff=${cutoff}_r=${reward}_gam=${gamma}/DDPG_$i" $reward $i "DDPG_d=${DW}_cutoff=${cutoff}_r=${reward}_gam=${gamma}_"
 done
