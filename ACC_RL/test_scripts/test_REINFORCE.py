@@ -8,6 +8,7 @@ import numpy as np
 
 from REINFORCE.REINFORCE_PG import REINFORCE
 from base_env import Environment
+from Blazer_Model import Model
 
 def transform_state(state_vec):
 
@@ -45,7 +46,7 @@ def main():
         drive_trace = 'IM240',
         max_episodes_replay_buffer = 1e3
     )
-
+    env = Model(automatic_control=False)
     state_dim = 11
     action_dim = 3
     hidden_dims = 32
