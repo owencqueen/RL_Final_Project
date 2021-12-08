@@ -179,9 +179,7 @@ class Environment:
                 a1 = trainer.explore_action(s1)
             else:
                 a1 = trainer.explore_action(s1, explore_noise_weight = explore_noise_weight)
-            #print(a1)
             action = a1.detach().clone().numpy()
-            #print(action)
             s2 = self.env.step(action.astype(np.double))
 
             r1 = self.reward(s2) # Reward calculated via next-state variables
@@ -203,15 +201,11 @@ class Environment:
 
             if cutoff is not None:
                 if cutoff < i: # Cuts the episode early
-                    #print(action)
                     break
 
             s1 = s2.detach().clone()
 
         return reward_sum
-
-    def run_step(self, agent):
-        pass
 
     def reward(self, state):
         r = reward_func_options[self.reward_func_option](state)

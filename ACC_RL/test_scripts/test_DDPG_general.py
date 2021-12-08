@@ -55,21 +55,6 @@ def parse_input_args():
 
     return args_dict
 
-    # return (
-    #     gamma,
-    #     actor_lr,
-    #     critic_lr,
-    #     actor_layer,
-    #     explore_noise,
-    #     batch_size,
-    #     drive_trace,
-    #     max_eps,
-    #     dweight_factor,
-    #     epochs,
-    #     cutoff,
-    #     output_f
-    # )
-
 def main():
 
     args_dict = parse_input_args()
@@ -119,15 +104,11 @@ def main():
             update_freq = 500, 
             explore_noise_weight= torch.tensor([down_weight, down_weight, down_weight])
         )
-        #print('OPTIMIZING')
-        #trainer.optimize(env.replay_buffer)
         rewards.append(r)
 
     if 'model_prefix' in args_dict.keys():
         trainer.save_model(prefix = args_dict['model_prefix'])
 
-    #plt.plot(rewards)
-    #plt.show()
     pickle.dump(rewards, open(os.path.join('DDPG_outputs', args_dict['output_f'] + '.pickle'), 'wb'))
 
 if __name__ == '__main__':
