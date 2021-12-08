@@ -1,4 +1,4 @@
-import sys; sys.path.append('..')
+import sys; sys.path.append('ACC_RL')
 import torch
 import matplotlib.pyplot as plt
 from tqdm import trange
@@ -17,25 +17,6 @@ torch.autograd.set_detect_anomaly(True)
 SOC = 10
 drive_trace = 'IM240'
 reward_func_option = 1
-
-def evaluate_policy(policy, env, eval_episodes = 10):
-    reward_sum = 0.0
-    state = env.reset()
-    for _ in range(eval_episodes):
-        
-        done = False
-        
-        for _ in trange(len(env)):
-            action, log_prob = policy.select_action(np.array(state))
-            action = action.astype(np.double)
-    
-            next_state = env.step(action)
-            reward = get_reward(next_state)
-            next_state = torch.autograd.Variable(torch.from_numpy(next_state)).float()
-            reward_sum += reward
-       
-        print("avg reward is: {0}".fomat(reward_sum))
-
 
 
 def get_reward(state):
@@ -67,12 +48,9 @@ def main():
 
         while total_steps < max_steps:
             action, log_prob = policy.select_action(np.array(state))
-            #action = action.astype(np.double)
-            #action = torch.squeeze(action)
             action = np.squeeze(action.astype(np.double))
-            #action = np.squeeze(action)
             next_state = env.step(action)
-            #print('num nans', next_state)
+
             reward = get_reward(next_state)
             next_state = torch.autograd.Variable(torch.from_numpy(next_state)).float()
             trajectory.append([np.array(state), action, log_prob, reward, next_state])
@@ -88,6 +66,9 @@ def main():
 
 
     plt.plot(save_rewards)
+    plt.title('REINFORCE')
+    plt.xlabel('Episodes')
+    plt.ylabel('Sum of Rewards per Episode')
     plt.show()
 
 if __name__ == '__main__':

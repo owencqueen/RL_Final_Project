@@ -1,4 +1,4 @@
-import sys, pickle, os, gc; sys.path.append('..')
+import sys, gc; sys.path.append('ACC_RL')
 import torch
 import matplotlib.pyplot as plt
 from tqdm import trange
@@ -45,14 +45,14 @@ def main():
             update_freq = 500, 
             explore_noise_weight= torch.tensor([down_weight, down_weight, down_weight])
         )
-        #print('OPTIMIZING')
-        #trainer.optimize(env.replay_buffer)
         rewards.append(r * 1e2)
         gc.collect() # Garbage collection for memory efficiency
 
-    #plt.plot(rewards)
-    #plt.show()
-    pickle.dump(rewards, open(os.path.join('DDPG_outputs', 'DDPG_epoch=100.pickle'), 'wb'))
+    plt.plot(rewards)
+    plt.xlabel('Episodes')
+    plt.ylabel('Sum of Rewards per Episode * 100')
+    plt.title('DDPG Training')
+    plt.show()
 
 if __name__ == '__main__':
     main()
