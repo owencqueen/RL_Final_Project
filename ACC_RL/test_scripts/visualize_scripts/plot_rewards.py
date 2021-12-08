@@ -11,8 +11,31 @@ def gather_from_dir(dirname, basename = None, show = False):
     
     rewards = []
     for i in range(1, len(os.listdir(dirname)) + 1):
-        r = pickle.load(open(dirname + '/' + basename + '{}.pickle'.format(i), 'rb'))
+        if os.path.exists(dirname + '/' + basename + '{}.pickle'.format(i)):
+            r = pickle.load(open(dirname + '/' + basename + '{}.pickle'.format(i), 'rb'))
         rewards += r
+
+    if show:
+        plt.plot(rewards)
+        plt.show()
+
+    return rewards
+
+def gather_from_REIN(dirname, basename = None, show = False):
+    '''
+    Gathers files from directory
+    '''
+    
+    rewards = []
+    i = 1
+    true_count = 0
+    while true_count < len(os.listdir(dirname)):
+        if os.path.exists(dirname + '/' + basename + '{}.pickle'.format(i)):
+            r = pickle.load(open(dirname + '/' + basename + '{}.pickle'.format(i), 'rb'))
+            rewards += r
+            true_count += 1
+
+        i += 1
 
     if show:
         plt.plot(rewards)
@@ -92,8 +115,33 @@ def plot_DDPG_gamma(r_opt = 1):
     plt.show()
 
 
-def plot_REINFORCE_gamma():
-    pass
+def plot_REINFORCE_gamma(r_opt = 1):
+    '''
+    Plot gamma experiments for REINFORCE
+
+    Args:
+        r_opt (int): Reward option (1 is speed, 2 is control)
+    '''
+
+    main_dir = '../REINFORCE_outputs'
+
+    reward_lists = []
+
+    first = '1' if r_opt == 1 else '3'
+
+    task = 'Speeding up Car' if r_opt == 1 else 'Speed Control'
+
+    for gamma in [0.9, 0.95, 1]:
+
+        r = gather_from_REIN(os.path.join(main_dir, 'REINFORCE_gam={}_r={}'.format(gamma, r_opt)), 'REINFORCE_')
+
+        plt.plot(r, label = '$\gamma={}$'.format(gamma))
+    
+    plt.title('REINFORCE Gamma - {}'.format(task))
+    plt.xlabel('Number of Episodes')
+    plt.ylabel('Sum of rewards per episode')
+    plt.legend()
+    plt.show()
 
 
 if __name__ == '__main__':
@@ -102,3 +150,6 @@ if __name__ == '__main__':
 
     plot_DDPG_gamma(r_opt = 1)
     plot_DDPG_gamma(r_opt = 2)
+
+    plot_REINFORCE_gamma(r_opt = 1)
+    plot_REINFORCE_gamma(r_opt = 2)
