@@ -24,7 +24,7 @@ def evaluate_policy(policy, env, eval_episodes = 10):
     for _ in range(eval_episodes):
         
         done = False
-        #while not done:
+        
         for _ in trange(len(env)):
             action, log_prob = policy.select_action(np.array(state))
             action = action.astype(np.double)
@@ -36,17 +36,7 @@ def evaluate_policy(policy, env, eval_episodes = 10):
        
         print("avg reward is: {0}".fomat(reward_sum))
 
-# def render_policy(policy):
-#     state = env.reset()
-#     done = False
-#     while not done:
-#         env.render()
-#         action, log_prob = policy.select_action(np.array(state))
-#         action = action.astype(np.double)
-#         next_state = env.step(action)
-#         reward = get_reward(next_state)
-#         next_state = torch.autograd.Variable(torch.from_numpy(next_state)).float()
-#     env.close()
+
 
 def get_reward(state):
         r = raw_speed_reward(state)
@@ -60,16 +50,16 @@ def main():
 
     policy = REINFORCE_trainer(state_dim, hidden_dims, action_dim)
 
-    max_episodes = 75
-    max_steps = 5000
+    max_episodes = 20
+    max_steps = 500
 
     total_episodes = 0
     save_rewards = []
     
 
-    #while total_episodes < max_episodes:
+    
     for total_episodes in trange(max_episodes):
-        #state = torch.autograd.Variable(torch.from_numpy(env.reset())).float()
+        
         state = env.reset(drive_trace = drive_trace, SOC = SOC)
         total_steps = 0
         trajectory = []
@@ -89,18 +79,13 @@ def main():
             state = next_state
             episode_reward += reward
             total_steps += 1
-            #print(total_steps)
-            # if total_steps > update_freq and (total_steps + 1) % update_freq == 0:
-            #     policy.train(trajectory, batch_size = None)
+
 
         total_episodes += 1
-        #print(total_episodes)
+        
         policy_loss = policy.train(trajectory, batch_size = None)
         save_rewards.append(episode_reward)
 
-        # if total_episodes % 10 == 0:
-        #     evaluate_policy(policy,env)
-        #env.close()
 
     plt.plot(save_rewards)
     plt.show()
