@@ -1,3 +1,8 @@
 *.e544*
 *.o544*
-*__pycache__*
+__pycache__/
+ACC_RL/test_scripts/Models/*
+ACC_RL/test_scripts/local_Models/*
+ACC_RL/test_scripts/local_DDPG_outputs/*
+ACC_RL/test_scripts/REINFORCE_Models/*
+*DS_Store*

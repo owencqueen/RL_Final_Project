@@ -9,9 +9,7 @@ import torch.optim as optim
 from torch.distributions import Normal
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-#LOG_SIG_MAX = 2
-#LOG_SIG_MIN = -20
-#epsilon = 1e-6
+
 
 def transform_state(state_vec):
 
@@ -71,24 +69,14 @@ class REINFORCE_trainer:
             returns.insert(0, R)
         returns = torch.tensor(returns)
 
-        # samples = list(zip(log_probs, returns))
-        # if batch_size is not None:
-        #     # Sample down to a batch size
-        #     samples = random.sample(samples, k = min(len(samples), batch_size))
+
 
         policy_loss = []
-        #ploss_sum = torch.autograd.Variable(torch.zeros(0))
-        #for log_prob, R in zip(log_probs, returns):
+
         for log_prob, R in zip(log_probs, returns):
             policy_loss.append( - log_prob * R)
 
-        # ploss_sum += (-1.0 * log_prob * R).item()
-        # policy_loss.append(torch.autograd.Variable(torch.tensor(ploss_sum)))
-        #policy_loss = -1.0 * log_prob * R
-        #print(policy_loss)
 
-
-        #print('policy loss', policy_loss)
         policy_loss = torch.stack(policy_loss).sum()
 
         self.policy_optimizer.zero_grad()
@@ -127,26 +115,9 @@ class Gaussian_pi(nn.Module):
         x = F.relu(self.linear(x))
         mean = self.mean(x)
         log_stdev = self.log_stdev(x)
-        #log_std = torch.clamp(log_stdev, min=LOG_SIG_MIN, max=LOG_SIG_MAX) # We limit the variance by forcing within a range of -2,20
+        
         stdev = log_stdev.exp()
         
         return mean, stdev
 
-# class Softmax_pi(nn.Module):
-#     '''
-#     Softmax action selection
-#     '''
 
-#     def __init__(self, state_dim, hidden_dims, action_dim):
-
-#         super(Softmax_pi, self).__init__()
-#         num_outputs = action_dim
-#         self.linear1 = nn.Linear(state_dim, hidden_dims)
-#         self.linear2 = nn.Linear(hidden_dims, num_outputs)
-
-#     def forward(self, inputs):
-#         x = inputs
-#         x = F.relu(self.linear1(x))
-#         action_scores = self.linear2(x)
-
-#         return F.softmax(action_scores)
